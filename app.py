@@ -24,6 +24,7 @@ STORAGE_BUCKET = "documents"
 
 # Check if running in production (Vercel sets VERCEL env var)
 IS_PRODUCTION = os.getenv("VERCEL") is not None
+BASE_URL = os.getenv("BASE_URL", "https://doc-urp.vercel.app" if IS_PRODUCTION else "http://localhost:5001")
 
 app, rt = fast_app(
     live=not IS_PRODUCTION,  # Disable live-reload in production
@@ -843,10 +844,15 @@ def get():
     )
 
 @rt('/forgot-password')
-async def post(email: str):
+async def post(email: str, request):
     """Handle password reset email"""
+    # Get the correct base URL from the request or environment
+    host = request.headers.get('host', 'localhost:5001')
+    protocol = 'https' if IS_PRODUCTION else 'http'
+    redirect_url = f"{protocol}://{host}/reset-password"
+    
     # Send reset email with custom redirect
-    result = await reset_password_email(email, redirect_to='http://localhost:5001/reset-password')
+    result = await reset_password_email(email, redirect_to=redirect_url)
     
     if result:
         # Success page

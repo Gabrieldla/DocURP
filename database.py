@@ -60,10 +60,13 @@ async def reset_password_email(email: str, redirect_to: str = None):
     """Send password reset email"""
     try:
         options = {"redirect_to": redirect_to} if redirect_to else {}
-        response = supabase.auth.reset_password_email(email, options)
+        response = supabase.auth.reset_password_for_email(email, options)
+        print(f"✅ Reset email sent to {email} with redirect: {redirect_to}")
         return response
     except Exception as e:
         print(f"❌ Error sending reset email: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 async def get_user_profile(user_id: str):
