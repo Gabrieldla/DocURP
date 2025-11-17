@@ -1474,6 +1474,11 @@ async def post(request):
     if not current_user:
         return RedirectResponse('/login', status_code=303)
     
+    # Get user's access token for RLS
+    access_token = request.cookies.get('sb_access_token')
+    if not access_token:
+        return RedirectResponse('/login', status_code=303)
+    
     form = await request.form()
     file = form.get('file')
     description = form.get('description', '')
@@ -1494,15 +1499,22 @@ async def post(request):
     content = await file.read()
     
     try:
+        # Create a Supabase client with the user's access token for RLS
+        user_supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+        user_supabase.auth.set_session(access_token, request.cookies.get('sb_refresh_token'))
+        
         # Upload to Supabase Storage
-        supabase_client.storage.from_(STORAGE_BUCKET).upload(
+        upload_response = user_supabase.storage.from_(STORAGE_BUCKET).upload(
             path=safe_filename,
             file=content,
             file_options={"content-type": file.content_type or 'application/octet-stream'}
         )
+        print(f"✅ File uploaded to storage: {safe_filename}")
+        print(f"Upload response: {upload_response}")
         
         # Get public URL
         file_url = supabase_client.storage.from_(STORAGE_BUCKET).get_public_url(safe_filename)
+        print(f"Public URL: {file_url}")
         
         # Save to database
         await save_document(
@@ -1514,10 +1526,13 @@ async def post(request):
             mime_type=file.content_type or 'application/octet-stream',
             description=description
         )
+        print(f"✅ Document saved to database")
         
         return RedirectResponse('/dashboard', status_code=303)
     except Exception as e:
-        print(f"Error uploading file: {e}")
+        print(f"❌ Error uploading file: {e}")
+        import traceback
+        traceback.print_exc()
         return RedirectResponse('/dashboard?error=upload_failed', status_code=303)
 
 @rt('/delete/{doc_id}')
