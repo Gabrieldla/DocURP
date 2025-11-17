@@ -33,7 +33,13 @@ app, rt = fast_app(
         Link(rel='preconnect', href='https://fonts.googleapis.com'),
         Link(rel='preconnect', href='https://fonts.gstatic.com', crossorigin='anonymous'),
         Link(rel='stylesheet', href='https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'),
-        Link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'),
+        Script(src='https://unpkg.com/lucide@latest'),
+        Script("""
+            // Initialize Lucide icons after page load
+            document.addEventListener('DOMContentLoaded', () => {
+                lucide.createIcons();
+            });
+        """),
     ),
     static_path='static'
 )
@@ -59,6 +65,10 @@ def get_current_user(request):
 def is_urp_email(email: str) -> bool:
     """Validate that email is from @urp.edu.pe domain"""
     return email.lower().endswith('@urp.edu.pe')
+
+def Icon(name: str, cls: str = "w-5 h-5", **kwargs):
+    """Helper function to create Lucide icons"""
+    return I(**{'data-lucide': name, 'class': cls, **kwargs})
 
 # Routes
 @rt('/')
@@ -510,15 +520,7 @@ def get():
                 # Logo/Brand section
                 Div(
                     Div(
-                        Svg(
-                            """<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />""",
-                            xmlns='http://www.w3.org/2000/svg',
-                            fill='none',
-                            viewBox='0 0 24 24',
-                            stroke_width='1.5',
-                            stroke='currentColor',
-                            cls='w-12 h-12 text-brand'
-                        ),
+                        Icon('file-text', 'w-12 h-12 text-brand'),
                         cls='flex justify-center mb-2'
                     ),
                     H1('DocURP', cls='text-3xl font-bold text-white text-center mb-1 tracking-tight font-sans'),
@@ -536,15 +538,7 @@ def get():
                             Label('Correo electrónico', cls='block text-sm font-medium text-gray-300 mb-2'),
                             Div(
                                 Div(
-                                    Svg(
-                                        """<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />""",
-                                        xmlns='http://www.w3.org/2000/svg',
-                                        fill='none',
-                                        viewBox='0 0 24 24',
-                                        stroke_width='1.5',
-                                        stroke='currentColor',
-                                        cls='w-5 h-5 text-brand'
-                                    ),
+                                    Icon('mail', 'w-5 h-5 text-brand'),
                                     cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
                                 ),
                                 Input(
@@ -564,23 +558,33 @@ def get():
                             Label('Contraseña', cls='block text-sm font-medium text-gray-300 mb-2'),
                             Div(
                                 Div(
-                                    Svg(
-                                        """<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />""",
-                                        xmlns='http://www.w3.org/2000/svg',
-                                        fill='none',
-                                        viewBox='0 0 24 24',
-                                        stroke_width='1.5',
-                                        stroke='currentColor',
-                                        cls='w-5 h-5 text-brand'
-                                    ),
+                                    Icon('lock', 'w-5 h-5 text-brand'),
                                     cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
                                 ),
                                 Input(
                                     type='password',
                                     name='password',
+                                    id='login-password',
                                     placeholder='••••••••',
                                     required=True,
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-12 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                ),
+                                Button(
+                                    Icon('eye', 'w-5 h-5 text-gray-400'),
+                                    type='button',
+                                    onclick="""
+                                        const input = document.getElementById('login-password');
+                                        const icon = this.querySelector('i');
+                                        if (input.type === 'password') {
+                                            input.type = 'text';
+                                            icon.setAttribute('data-lucide', 'eye-off');
+                                        } else {
+                                            input.type = 'password';
+                                            icon.setAttribute('data-lucide', 'eye');
+                                        }
+                                        lucide.createIcons();
+                                    """,
+                                    cls='absolute inset-y-0 right-0 pr-3 flex items-center hover:text-brand transition'
                                 ),
                                 cls='relative'
                             ),
