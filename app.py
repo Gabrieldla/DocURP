@@ -22,7 +22,11 @@ ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.doc', '.xlsx', '.xls'}
 # Supabase Storage bucket name
 STORAGE_BUCKET = "documents"
 
+# Check if running in production (Vercel sets VERCEL env var)
+IS_PRODUCTION = os.getenv("VERCEL") is not None
+
 app, rt = fast_app(
+    live=not IS_PRODUCTION,  # Disable live-reload in production
     hdrs=(
         Script(src='https://cdn.tailwindcss.com'),
         Link(rel='preconnect', href='https://fonts.googleapis.com'),
