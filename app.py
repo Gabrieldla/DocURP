@@ -29,19 +29,49 @@ BASE_URL = os.getenv("BASE_URL", "https://doc-urp.vercel.app" if IS_PRODUCTION e
 app, rt = fast_app(
     live=not IS_PRODUCTION,  # Disable live-reload in production
     hdrs=(
-        Link(rel='stylesheet', href='/static/css/output.css'),
+        Script(src='https://cdn.tailwindcss.com'),
         Link(rel='preconnect', href='https://fonts.googleapis.com'),
         Link(rel='preconnect', href='https://fonts.gstatic.com', crossorigin='anonymous'),
         Link(rel='stylesheet', href='https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'),
-        Script(src='https://unpkg.com/lucide@latest'),
         Script("""
-            // Initialize Lucide icons after page load
-            document.addEventListener('DOMContentLoaded', () => {
-                lucide.createIcons();
-            });
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            'brand': '#34B27B',
+                            'brand-dark': '#11181C',
+                            'brand-light': '#F8F9FA',
+                            'primary': '#34B27B',
+                            'primary-dark': '#2A9063',
+                        },
+                        fontFamily: {
+                            'sans': ['Outfit', 'sans-serif'],
+                        }
+                    }
+                }
+            }
         """),
-    ),
-    static_path='static'
+        Link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'),
+        Style("""
+            :root {
+                --background: #F8F9FA;
+                --foreground: #11181C;
+                --card: #FFFFFF;
+                --card-foreground: #11181C;
+                --primary: #34B27B;
+                --primary-foreground: #FFFFFF;
+                --secondary: #F8F9FA;
+                --secondary-foreground: #11181C;
+                --border: #E5E7EB;
+                --input: #FFFFFF;
+                --radius: 0.5rem;
+            }
+            
+            body {
+                font-family: 'Outfit', sans-serif;
+            }
+        """),
+    )
 )
 
 # Initialize Supabase client
@@ -65,10 +95,6 @@ def get_current_user(request):
 def is_urp_email(email: str) -> bool:
     """Validate that email is from @urp.edu.pe domain"""
     return email.lower().endswith('@urp.edu.pe')
-
-def Icon(name: str, cls: str = "w-5 h-5", **kwargs):
-    """Helper function to create Lucide icons"""
-    return I(**{'data-lucide': name, 'class': cls, **kwargs})
 
 # Routes
 @rt('/')
@@ -117,27 +143,12 @@ def get():
                         # Name field
                         Div(
                             Label('Nombre completo', cls='block text-sm font-medium text-gray-300 mb-2'),
-                            Div(
-                                Div(
-                                    Svg(
-                                        """<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />""",
-                                        xmlns='http://www.w3.org/2000/svg',
-                                        fill='none',
-                                        viewBox='0 0 24 24',
-                                        stroke_width='1.5',
-                                        stroke='currentColor',
-                                        cls='w-5 h-5 text-brand'
-                                    ),
-                                    cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
-                                ),
-                                Input(
-                                    type='text',
-                                    name='name',
-                                    placeholder='Juan Pérez',
-                                    required=True,
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
-                                ),
-                                cls='relative'
+                            Input(
+                                type='text',
+                                name='name',
+                                placeholder='Juan Pérez',
+                                required=True,
+                                cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
                             ),
                             cls='mb-4'
                         ),
@@ -160,27 +171,12 @@ def get():
                         # Email field
                         Div(
                             Label('Correo institucional', cls='block text-sm font-medium text-gray-300 mb-2'),
-                            Div(
-                                Div(
-                                    Svg(
-                                        """<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />""",
-                                        xmlns='http://www.w3.org/2000/svg',
-                                        fill='none',
-                                        viewBox='0 0 24 24',
-                                        stroke_width='1.5',
-                                        stroke='currentColor',
-                                        cls='w-5 h-5 text-brand'
-                                    ),
-                                    cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
-                                ),
-                                Input(
-                                    type='email',
-                                    name='email',
-                                    placeholder='correo@urp.edu.pe',
-                                    required=True,
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
-                                ),
-                                cls='relative'
+                            Input(
+                                type='email',
+                                name='email',
+                                placeholder='correo@urp.edu.pe',
+                                required=True,
+                                cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
                             ),
                             cls='mb-4'
                         ),
@@ -189,25 +185,30 @@ def get():
                         Div(
                             Label('Contraseña (mínimo 6 caracteres)', cls='block text-sm font-medium text-gray-300 mb-2'),
                             Div(
-                                Div(
-                                    Svg(
-                                        """<path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />""",
-                                        xmlns='http://www.w3.org/2000/svg',
-                                        fill='none',
-                                        viewBox='0 0 24 24',
-                                        stroke_width='1.5',
-                                        stroke='currentColor',
-                                        cls='w-5 h-5 text-brand'
-                                    ),
-                                    cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
-                                ),
                                 Input(
                                     type='password',
                                     name='password',
+                                    id='register-password',
                                     placeholder='••••••••',
                                     required=True,
                                     minlength='6',
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl px-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                ),
+                                Button(
+                                    I(cls='fas fa-eye text-gray-400', id='register-eye-icon'),
+                                    type='button',
+                                    onclick="""
+                                        const input = document.getElementById('register-password');
+                                        const icon = document.getElementById('register-eye-icon');
+                                        if (input.type === 'password') {
+                                            input.type = 'text';
+                                            icon.className = 'fas fa-eye-slash text-brand';
+                                        } else {
+                                            input.type = 'password';
+                                            icon.className = 'fas fa-eye text-gray-400';
+                                        }
+                                    """,
+                                    cls='absolute inset-y-0 right-0 pr-3 flex items-center hover:text-brand transition bg-transparent border-0'
                                 ),
                                 cls='relative'
                             ),
@@ -218,25 +219,30 @@ def get():
                         Div(
                             Label('Confirmar contraseña', cls='block text-sm font-medium text-gray-300 mb-2'),
                             Div(
-                                Div(
-                                    Svg(
-                                        """<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />""",
-                                        xmlns='http://www.w3.org/2000/svg',
-                                        fill='none',
-                                        viewBox='0 0 24 24',
-                                        stroke_width='1.5',
-                                        stroke='currentColor',
-                                        cls='w-5 h-5 text-brand'
-                                    ),
-                                    cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
-                                ),
                                 Input(
                                     type='password',
                                     name='confirm_password',
+                                    id='register-confirm-password',
                                     placeholder='••••••••',
                                     required=True,
                                     minlength='6',
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl px-4 pr-12 py-3 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                ),
+                                Button(
+                                    I(cls='fas fa-eye text-gray-400', id='register-confirm-eye-icon'),
+                                    type='button',
+                                    onclick="""
+                                        const input = document.getElementById('register-confirm-password');
+                                        const icon = document.getElementById('register-confirm-eye-icon');
+                                        if (input.type === 'password') {
+                                            input.type = 'text';
+                                            icon.className = 'fas fa-eye-slash text-brand';
+                                        } else {
+                                            input.type = 'password';
+                                            icon.className = 'fas fa-eye text-gray-400';
+                                        }
+                                    """,
+                                    cls='absolute inset-y-0 right-0 pr-3 flex items-center hover:text-brand transition bg-transparent border-0'
                                 ),
                                 cls='relative'
                             ),
@@ -520,7 +526,15 @@ def get():
                 # Logo/Brand section
                 Div(
                     Div(
-                        Icon('file-text', 'w-12 h-12 text-brand'),
+                        Svg(
+                            """<path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />""",
+                            xmlns='http://www.w3.org/2000/svg',
+                            fill='none',
+                            viewBox='0 0 24 24',
+                            stroke_width='1.5',
+                            stroke='currentColor',
+                            cls='w-12 h-12 text-brand'
+                        ),
                         cls='flex justify-center mb-2'
                     ),
                     H1('DocURP', cls='text-3xl font-bold text-white text-center mb-1 tracking-tight font-sans'),
@@ -536,19 +550,12 @@ def get():
                         # Email field
                         Div(
                             Label('Correo electrónico', cls='block text-sm font-medium text-gray-300 mb-2'),
-                            Div(
-                                Div(
-                                    Icon('mail', 'w-5 h-5 text-brand'),
-                                    cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
-                                ),
-                                Input(
-                                    type='email',
-                                    name='email',
-                                    placeholder='correo@urp.edu.pe',
-                                    required=True,
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
-                                ),
-                                cls='relative'
+                            Input(
+                                type='email',
+                                name='email',
+                                placeholder='correo@urp.edu.pe',
+                                required=True,
+                                cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
                             ),
                             cls='mb-5'
                         ),
@@ -557,34 +564,29 @@ def get():
                         Div(
                             Label('Contraseña', cls='block text-sm font-medium text-gray-300 mb-2'),
                             Div(
-                                Div(
-                                    Icon('lock', 'w-5 h-5 text-brand'),
-                                    cls='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'
-                                ),
                                 Input(
                                     type='password',
                                     name='password',
                                     id='login-password',
                                     placeholder='••••••••',
                                     required=True,
-                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl pl-10 pr-12 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
+                                    cls='w-full bg-white/5 backdrop-blur-sm border border-white/10 text-white placeholder-gray-400 rounded-xl px-4 pr-12 py-3.5 focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition duration-200'
                                 ),
                                 Button(
-                                    Icon('eye', 'w-5 h-5 text-gray-400'),
+                                    I(cls='fas fa-eye text-gray-400', id='login-eye-icon'),
                                     type='button',
                                     onclick="""
                                         const input = document.getElementById('login-password');
-                                        const icon = this.querySelector('i');
+                                        const icon = document.getElementById('login-eye-icon');
                                         if (input.type === 'password') {
                                             input.type = 'text';
-                                            icon.setAttribute('data-lucide', 'eye-off');
+                                            icon.className = 'fas fa-eye-slash text-brand';
                                         } else {
                                             input.type = 'password';
-                                            icon.setAttribute('data-lucide', 'eye');
+                                            icon.className = 'fas fa-eye text-gray-400';
                                         }
-                                        lucide.createIcons();
                                     """,
-                                    cls='absolute inset-y-0 right-0 pr-3 flex items-center hover:text-brand transition'
+                                    cls='absolute inset-y-0 right-0 pr-3 flex items-center hover:text-brand transition bg-transparent border-0'
                                 ),
                                 cls='relative'
                             ),
@@ -1237,19 +1239,12 @@ async def get(request):
                         # Filters
                         Div(
                             # Search bar
-                            Div(
-                                Div(
-                                    I(cls='fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2'),
-                                    cls='relative'
-                                ),
-                                Input(
-                                    type='text',
-                                    id='search-input',
-                                    placeholder='Buscar documentos...',
-                                    oninput='searchDocs()',
-                                    cls='w-full md:w-64 pl-10 pr-4 py-2 bg-white/5 border border-white/10 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition'
-                                ),
-                                cls='relative mb-3 md:mb-0'
+                            Input(
+                                type='text',
+                                id='search-input',
+                                placeholder='Buscar documentos...',
+                                oninput='searchDocs()',
+                                cls='w-full md:w-64 px-4 py-2.5 bg-white/5 border border-white/10 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition'
                             ),
                             # Filters
                             Div(
@@ -1258,34 +1253,34 @@ async def get(request):
                                     'Todos',
                                     onclick="filterDocs('all')",
                                     id='filter-all',
-                                    cls='px-4 py-2 bg-brand text-white rounded-lg font-semibold transition hover:bg-primary-dark'
+                                    cls='px-4 py-2.5 bg-brand text-white rounded-lg font-semibold transition hover:bg-primary-dark'
                                 ),
                                 Button(
                                     I(cls='fas fa-file-pdf mr-2'),
                                     'PDF',
                                     onclick="filterDocs('pdf')",
                                     id='filter-pdf',
-                                    cls='px-4 py-2 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
+                                    cls='px-4 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
                                 ),
                                 Button(
                                     I(cls='fas fa-file-word mr-2'),
                                     'Word',
                                     onclick="filterDocs('word')",
                                     id='filter-word',
-                                    cls='px-4 py-2 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
+                                    cls='px-4 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
                                 ),
                                 Button(
                                     I(cls='fas fa-file-excel mr-2'),
                                     'Excel',
                                     onclick="filterDocs('excel')",
                                     id='filter-excel',
-                                    cls='px-4 py-2 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
+                                    cls='px-4 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
                                 ),
                                 cls='flex gap-2 flex-wrap'
                             ),
-                            cls='flex flex-col md:flex-row gap-3 items-start md:items-center'
+                            cls='flex flex-col md:flex-row gap-3 items-stretch md:items-center'
                         ),
-                        cls='flex justify-between items-center mb-6 flex-wrap gap-4'
+                        cls='flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4'
                     ),
                     
                     Script("""
@@ -1377,16 +1372,16 @@ async def get(request):
                                         ),
                                         Div(
                                             A(
-                                                I(cls='fas fa-download'),
+                                                I(cls='fas fa-download text-xl'),
                                                 href=f"/download/{doc['id']}",
-                                                cls='flex items-center justify-center w-10 h-10 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition transform hover:scale-110',
+                                                cls='flex items-center justify-center w-10 h-10 text-brand hover:text-primary-dark transition transform hover:scale-125',
                                                 title='Descargar'
                                             ),
                                             Form(
                                                 Button(
-                                                    I(cls='fas fa-trash'),
+                                                    I(cls='fas fa-trash text-xl'),
                                                     type='submit',
-                                                    cls='flex items-center justify-center w-10 h-10 bg-red-500 hover:bg-red-600 text-white rounded-lg transition transform hover:scale-110',
+                                                    cls='flex items-center justify-center w-10 h-10 text-red-400 hover:text-red-500 transition transform hover:scale-125 bg-transparent border-0 p-0',
                                                     title='Eliminar',
                                                     onclick='return confirm("¿Estás seguro de eliminar este documento?")'
                                                 ),
