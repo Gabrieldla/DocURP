@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  /* Colores personalizados */
+  --color-brand: #34b27b;
+  --color-brand-dark: #11181c;
+  --color-brand-light: #f8f9fa;
+  --color-primary: #34b27b;
+  --color-primary-dark: #2a9063;
+  
+  /* Fuentes */
+  --font-sans: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Estilos base */
+body {
+  font-family: var(--font-sans);
+}

@@ -29,49 +29,13 @@ BASE_URL = os.getenv("BASE_URL", "https://doc-urp.vercel.app" if IS_PRODUCTION e
 app, rt = fast_app(
     live=not IS_PRODUCTION,  # Disable live-reload in production
     hdrs=(
-        Script(src='https://cdn.tailwindcss.com'),
+        Link(rel='stylesheet', href='/static/css/output.css'),
         Link(rel='preconnect', href='https://fonts.googleapis.com'),
         Link(rel='preconnect', href='https://fonts.gstatic.com', crossorigin='anonymous'),
         Link(rel='stylesheet', href='https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap'),
-        Script("""
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            'brand': '#34B27B',
-                            'brand-dark': '#11181C',
-                            'brand-light': '#F8F9FA',
-                            'primary': '#34B27B',
-                            'primary-dark': '#2A9063',
-                        },
-                        fontFamily: {
-                            'sans': ['Outfit', 'sans-serif'],
-                        }
-                    }
-                }
-            }
-        """),
         Link(rel='stylesheet', href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css'),
-        Style("""
-            :root {
-                --background: #F8F9FA;
-                --foreground: #11181C;
-                --card: #FFFFFF;
-                --card-foreground: #11181C;
-                --primary: #34B27B;
-                --primary-foreground: #FFFFFF;
-                --secondary: #F8F9FA;
-                --secondary-foreground: #11181C;
-                --border: #E5E7EB;
-                --input: #FFFFFF;
-                --radius: 0.5rem;
-            }
-            
-            body {
-                font-family: 'Outfit', sans-serif;
-            }
-        """),
-    )
+    ),
+    static_path='static'
 )
 
 # Initialize Supabase client
