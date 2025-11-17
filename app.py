@@ -15,11 +15,12 @@ load_dotenv()
 
 # Configuration
 SECRET_KEY = os.getenv("SECRET_KEY", "tu-clave-secreta-muy-segura-cambiala")
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.doc', '.xlsx', '.xls'}
+
+# Supabase Storage bucket name
+STORAGE_BUCKET = "documents"
 
 app, rt = fast_app(
     hdrs=(
@@ -1459,7 +1460,7 @@ async def get(request):
 
 @rt('/upload')
 async def post(request):
-    """Handle file upload"""
+    """Handle file upload to Supabase Storage"""
     current_user = get_current_user(request)
     if not current_user:
         return RedirectResponse('/login', status_code=303)
@@ -1476,35 +1477,43 @@ async def post(request):
     if file_ext not in ALLOWED_EXTENSIONS:
         return RedirectResponse('/dashboard?error=invalid_file', status_code=303)
     
-    # Create user directory
-    user_dir = UPLOAD_DIR / str(current_user.id)
-    user_dir.mkdir(exist_ok=True)
-    
-    # Save file with timestamp to avoid conflicts
+    # Generate unique filename
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    safe_filename = f"{timestamp}_{file.filename}"
-    file_path = user_dir / safe_filename
+    safe_filename = f"{current_user.id}/{timestamp}_{file.filename}"
     
-    # Save file to disk
+    # Read file content
     content = await file.read()
-    file_path.write_bytes(content)
     
-    # Save to database
-    await save_document(
-        user_id=current_user.id,
-        filename=file.filename,
-        stored_filename=safe_filename,
-        file_path=str(file_path),
-        file_size=len(content),
-        mime_type=file.content_type or 'application/octet-stream',
-        description=description
-    )
-    
-    return RedirectResponse('/dashboard', status_code=303)
+    try:
+        # Upload to Supabase Storage
+        supabase_client.storage.from_(STORAGE_BUCKET).upload(
+            path=safe_filename,
+            file=content,
+            file_options={"content-type": file.content_type or 'application/octet-stream'}
+        )
+        
+        # Get public URL
+        file_url = supabase_client.storage.from_(STORAGE_BUCKET).get_public_url(safe_filename)
+        
+        # Save to database
+        await save_document(
+            user_id=current_user.id,
+            filename=file.filename,
+            stored_filename=safe_filename,
+            file_path=file_url,
+            file_size=len(content),
+            mime_type=file.content_type or 'application/octet-stream',
+            description=description
+        )
+        
+        return RedirectResponse('/dashboard', status_code=303)
+    except Exception as e:
+        print(f"Error uploading file: {e}")
+        return RedirectResponse('/dashboard?error=upload_failed', status_code=303)
 
 @rt('/delete/{doc_id}')
 async def post(request, doc_id: str):
-    """Delete document"""
+    """Delete document from Supabase Storage"""
     current_user = get_current_user(request)
     if not current_user:
         return RedirectResponse('/login', status_code=303)
@@ -1516,10 +1525,11 @@ async def post(request, doc_id: str):
     if not doc:
         return RedirectResponse('/dashboard', status_code=303)
     
-    # Delete file from disk
-    file_path = Path(doc['file_path'])
-    if file_path.exists():
-        file_path.unlink()
+    try:
+        # Delete file from Supabase Storage
+        supabase_client.storage.from_(STORAGE_BUCKET).remove([doc['stored_filename']])
+    except Exception as e:
+        print(f"Error deleting file from storage: {e}")
     
     # Delete from database
     from database import delete_document
@@ -1529,7 +1539,7 @@ async def post(request, doc_id: str):
 
 @rt('/download/{doc_id}')
 async def get(request, doc_id: str):
-    """Download document"""
+    """Download document from Supabase Storage"""
     current_user = get_current_user(request)
     if not current_user:
         return RedirectResponse('/login', status_code=303)
@@ -1541,15 +1551,8 @@ async def get(request, doc_id: str):
     if not doc:
         return RedirectResponse('/dashboard', status_code=303)
     
-    file_path = Path(doc['file_path'])
-    if not file_path.exists():
-        return RedirectResponse('/dashboard?error=file_not_found', status_code=303)
-    
-    return FileResponse(
-        path=file_path,
-        filename=doc['filename'],
-        media_type=doc['mime_type']
-    )
+    # Redirect to public URL (Supabase Storage)
+    return RedirectResponse(doc['file_path'], status_code=303)
 
 @rt('/view/{doc_id}')
 async def get(request, doc_id: str):
