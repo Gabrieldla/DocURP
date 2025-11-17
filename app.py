@@ -1231,56 +1231,59 @@ async def get(request):
                 # Separate documents by type
                 Div(
                     Div(
+                        # Title
                         Div(
                             I(cls='fas fa-folder-open text-brand text-2xl mr-3'),
                             H2('Mis Documentos', cls='text-2xl font-bold text-white font-sans'),
-                            cls='flex items-center'
+                            cls='flex items-center mb-6'
                         ),
-                        # Filters
+                        # Search and Filters
                         Div(
                             # Search bar
-                            Input(
-                                type='text',
-                                id='search-input',
-                                placeholder='Buscar documentos...',
-                                oninput='searchDocs()',
-                                cls='w-full md:w-64 px-4 py-2.5 bg-white/5 border border-white/10 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition'
+                            Div(
+                                Input(
+                                    type='text',
+                                    id='search-input',
+                                    placeholder='Buscar documentos...',
+                                    oninput='searchDocs()',
+                                    cls='w-full px-4 py-2.5 bg-white/5 border border-white/10 text-white placeholder-gray-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand focus:border-transparent transition'
+                                ),
+                                cls='mb-3 w-full'
                             ),
                             # Filters
                             Div(
                                 Button(
-                                    I(cls='fas fa-filter mr-2'),
+                                    I(cls='fas fa-th-large mr-2'),
                                     'Todos',
                                     onclick="filterDocs('all')",
                                     id='filter-all',
-                                    cls='px-4 py-2.5 bg-brand text-white rounded-lg font-semibold transition hover:bg-primary-dark'
+                                    cls='px-6 py-2.5 bg-brand text-white rounded-lg font-semibold transition hover:bg-primary-dark min-w-[110px] flex items-center justify-center'
                                 ),
                                 Button(
                                     I(cls='fas fa-file-pdf mr-2'),
                                     'PDF',
                                     onclick="filterDocs('pdf')",
                                     id='filter-pdf',
-                                    cls='px-4 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
+                                    cls='px-6 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20 min-w-[110px] flex items-center justify-center'
                                 ),
                                 Button(
                                     I(cls='fas fa-file-word mr-2'),
                                     'Word',
                                     onclick="filterDocs('word')",
                                     id='filter-word',
-                                    cls='px-4 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
+                                    cls='px-6 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20 min-w-[110px] flex items-center justify-center'
                                 ),
                                 Button(
                                     I(cls='fas fa-file-excel mr-2'),
                                     'Excel',
                                     onclick="filterDocs('excel')",
                                     id='filter-excel',
-                                    cls='px-4 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20'
+                                    cls='px-6 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20 min-w-[110px] flex items-center justify-center'
                                 ),
-                                cls='flex gap-2 flex-wrap'
+                                cls='flex gap-2 flex-wrap justify-center md:justify-start'
                             ),
-                            cls='flex flex-col md:flex-row gap-3 items-stretch md:items-center'
+                            cls='w-full mb-6'
                         ),
-                        cls='flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4'
                     ),
                     
                     Script("""
@@ -1290,9 +1293,9 @@ async def get(request):
                             buttons.forEach(btn => {
                                 const element = document.getElementById('filter-' + btn);
                                 if (btn === type) {
-                                    element.className = 'px-4 py-2 bg-brand text-white rounded-lg font-semibold transition hover:bg-primary-dark';
+                                    element.className = 'px-6 py-2.5 bg-brand text-white rounded-lg font-semibold transition hover:bg-primary-dark min-w-[110px] flex items-center justify-center';
                                 } else {
-                                    element.className = 'px-4 py-2 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20';
+                                    element.className = 'px-6 py-2.5 bg-white/10 text-gray-300 rounded-lg font-semibold transition hover:bg-white/20 min-w-[110px] flex items-center justify-center';
                                 }
                             });
                             
@@ -1312,12 +1315,25 @@ async def get(request):
                         }
                         
                         function searchDocs() {
-                            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+                            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
                             const docCards = document.querySelectorAll('[data-doc-name]');
                             
+                            // If search is empty, show all documents
+                            if (searchTerm === '') {
+                                docCards.forEach(card => {
+                                    card.style.display = 'block';
+                                });
+                                const categories = document.querySelectorAll('[data-category]');
+                                categories.forEach(cat => {
+                                    cat.style.display = 'block';
+                                });
+                                return;
+                            }
+                            
+                            // First, show/hide individual documents
                             docCards.forEach(card => {
-                                const docName = card.getAttribute('data-doc-name').toLowerCase();
-                                const docDesc = card.getAttribute('data-doc-desc').toLowerCase();
+                                const docName = (card.getAttribute('data-doc-name') || '').toLowerCase();
+                                const docDesc = (card.getAttribute('data-doc-desc') || '').toLowerCase();
                                 
                                 if (docName.includes(searchTerm) || docDesc.includes(searchTerm)) {
                                     card.style.display = 'block';
@@ -1326,11 +1342,22 @@ async def get(request):
                                 }
                             });
                             
-                            // Show all categories when searching
-                            if (searchTerm) {
-                                const categories = document.querySelectorAll('[data-category]');
-                                categories.forEach(cat => cat.style.display = 'block');
-                            }
+                            // Show/hide categories based on visible documents
+                            const categories = document.querySelectorAll('[data-category]');
+                            categories.forEach(cat => {
+                                const docsInCategory = cat.querySelectorAll('[data-doc-name]');
+                                
+                                // Count visible documents in this category
+                                let hasVisibleDocs = false;
+                                docsInCategory.forEach(doc => {
+                                    if (doc.style.display !== 'none') {
+                                        hasVisibleDocs = true;
+                                    }
+                                });
+                                
+                                // Show category only if it has visible documents
+                                cat.style.display = hasVisibleDocs ? 'block' : 'none';
+                            });
                         }
                     """),
                     
