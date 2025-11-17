@@ -70,8 +70,7 @@ app, rt = fast_app(
                 font-family: 'Outfit', sans-serif;
             }
         """),
-    ),
-    live=True
+    )
 )
 
 # Initialize Supabase client
