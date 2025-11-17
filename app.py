@@ -125,7 +125,7 @@ def get():
                         ),
                         cls='flex justify-center mb-3'
                     ),
-                    H1('DocHub URP', cls='text-3xl font-bold text-white text-center mb-2 tracking-tight font-sans'),
+                    H1('DocURP', cls='text-3xl font-bold text-white text-center mb-2 tracking-tight font-sans'),
                     P('Crea tu cuenta institucional', cls='text-brand/90 text-center text-sm font-light'),
                     cls='mb-8'
                 ),
@@ -552,7 +552,7 @@ def get():
                         ),
                         cls='flex justify-center mb-3'
                     ),
-                    H1('DocHub URP', cls='text-3xl font-bold text-white text-center mb-2 tracking-tight font-sans'),
+                    H1('DocURP', cls='text-3xl font-bold text-white text-center mb-2 tracking-tight font-sans'),
                     P('Tu plataforma de documentos', cls='text-brand/90 text-center text-sm font-light'),
                     cls='mb-8'
                 ),
@@ -1620,6 +1620,9 @@ async def startup():
 @rt('/static/{filepath:path}')
 def get(filepath: str):
     return FileResponse(f'static/{filepath}')
+
+# Export app for Vercel
+handler = app
 
 if __name__ == '__main__':
     import uvicorn
