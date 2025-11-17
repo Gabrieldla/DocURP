@@ -128,11 +128,11 @@ def get():
                             stroke='currentColor',
                             cls='w-12 h-12 text-brand'
                         ),
-                        cls='flex justify-center mb-3'
+                        cls='flex justify-center mb-2'
                     ),
-                    H1('DocURP', cls='text-3xl font-bold text-white text-center mb-2 tracking-tight font-sans'),
+                    H1('DocURP', cls='text-3xl font-bold text-white text-center mb-1 tracking-tight font-sans'),
                     P('Crea tu cuenta institucional', cls='text-brand/90 text-center text-sm font-light'),
-                    cls='mb-8'
+                    cls='mb-6'
                 ),
                 
                 # Form container
@@ -298,7 +298,7 @@ def get():
                     cls='bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl p-10 w-full max-w-md border border-white/10'
                 ),
                 
-                cls='relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12'
+                cls='relative z-10 flex flex-col items-center min-h-screen px-4 pt-8 pb-12'
             ),
             cls='relative'
         ),
@@ -555,11 +555,11 @@ def get():
                             stroke='currentColor',
                             cls='w-12 h-12 text-brand'
                         ),
-                        cls='flex justify-center mb-3'
+                        cls='flex justify-center mb-2'
                     ),
-                    H1('DocURP', cls='text-3xl font-bold text-white text-center mb-2 tracking-tight font-sans'),
+                    H1('DocURP', cls='text-3xl font-bold text-white text-center mb-1 tracking-tight font-sans'),
                     P('Tu plataforma de documentos', cls='text-brand/90 text-center text-sm font-light'),
-                    cls='mb-8'
+                    cls='mb-6'
                 ),
                 
                 # Form container
@@ -658,7 +658,7 @@ def get():
                     cls='bg-white/5 backdrop-blur-xl rounded-3xl shadow-2xl p-10 w-full max-w-md border border-white/10'
                 ),
                 
-                cls='relative z-10 flex flex-col items-center justify-center min-h-screen px-4 py-12'
+                cls='relative z-10 flex flex-col items-center min-h-screen px-4 pt-8 pb-12'
             ),
             cls='relative'
         ),
