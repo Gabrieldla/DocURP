@@ -1,9 +1,10 @@
 import sys
 import os
 
-# Add parent directory to path so we can import app
+# Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app import app
+from app import app as application
 
-# Vercel ASGI handler - FastHTML app is already an ASGI application
+# Vercel expects 'app' variable for ASGI
+app = application
