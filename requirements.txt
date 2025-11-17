@@ -1,0 +1,13 @@
+python-fasthtml
+python-multipart
+uvicorn
+starlette
+jinja2
+python-dotenv
+python-decouple
+bcrypt
+pyjwt
+supabase
+openpyxl
+python-docx
+pypdf2
