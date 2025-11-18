@@ -1136,16 +1136,19 @@ async def get(request):
     if not current_user:
         return RedirectResponse('/login', status_code=303)
     
-    # Get user profile and documents
-    profile = await get_user_profile(current_user.id)
+    # Get user profile and documents in parallel (optimized)
+    import asyncio
+    profile, documents = await asyncio.gather(
+        get_user_profile(current_user.id),
+        get_user_documents(current_user.id)
+    )
+    
     if not profile:
         # Profile not found, logout and redirect to login
         response = RedirectResponse('/login', status_code=303)
         response.delete_cookie('sb_access_token')
         response.delete_cookie('sb_refresh_token')
         return response
-    
-    documents = await get_user_documents(current_user.id)
     
     return Div(
         # Background

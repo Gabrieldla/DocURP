@@ -1,4 +1,6 @@
 import os
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
@@ -12,6 +14,9 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", SUPABASE_ANON_KEY)
 
 # Create Supabase client with service role for admin operations
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_KEY)
+
+# Thread pool for async operations (optimized for I/O operations)
+executor = ThreadPoolExecutor(max_workers=10)
 
 async def init_db():
     """Initialize database - Supabase Auth handles user management"""
@@ -45,16 +50,20 @@ async def signup_user(email: str, password: str, name: str, student_code: str):
         return None
 
 async def signin_user(email: str, password: str):
-    """Sign in user with Supabase Auth"""
-    try:
-        response = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
-        return response
-    except Exception as e:
-        print(f"❌ Error signing in: {e}")
-        return None
+    """Sign in user with Supabase Auth - optimized with async execution"""
+    def _signin():
+        try:
+            response = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+            return response
+        except Exception as e:
+            print(f"❌ Error signing in: {e}")
+            return None
+    
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _signin)
 
 async def reset_password_email(email: str, redirect_to: str = None):
     """Send password reset email"""
@@ -71,13 +80,17 @@ async def reset_password_email(email: str, redirect_to: str = None):
         return False
 
 async def get_user_profile(user_id: str):
-    """Get user profile by ID"""
-    try:
-        response = supabase.table('profiles').select('*').eq('id', user_id).execute()
-        return response.data[0] if response.data else None
-    except Exception as e:
-        print(f"Error getting profile: {e}")
-        return None
+    """Get user profile by ID - optimized with async execution"""
+    def _get_profile():
+        try:
+            response = supabase.table('profiles').select('*').eq('id', user_id).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error getting profile: {e}")
+            return None
+    
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _get_profile)
 
 async def get_profile_by_email(email: str):
     """Get profile by email"""
@@ -99,30 +112,38 @@ async def get_profile_by_student_code(student_code: str):
 
 async def save_document(user_id: str, filename: str, stored_filename: str, 
                        file_path: str, file_size: int, mime_type: str, description: str = None):
-    """Save document metadata"""
-    try:
-        response = supabase.table('documents').insert({
-            'user_id': user_id,
-            'filename': filename,
-            'stored_filename': stored_filename,
-            'file_path': file_path,
-            'file_size': file_size,
-            'mime_type': mime_type,
-            'description': description
-        }).execute()
-        return response.data[0] if response.data else None
-    except Exception as e:
-        print(f"Error saving document: {e}")
-        return None
+    """Save document metadata - optimized with async execution"""
+    def _save_document():
+        try:
+            response = supabase.table('documents').insert({
+                'user_id': user_id,
+                'filename': filename,
+                'stored_filename': stored_filename,
+                'file_path': file_path,
+                'file_size': file_size,
+                'mime_type': mime_type,
+                'description': description
+            }).execute()
+            return response.data[0] if response.data else None
+        except Exception as e:
+            print(f"Error saving document: {e}")
+            return None
+    
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _save_document)
 
 async def get_user_documents(user_id: str):
-    """Get all documents for a user"""
-    try:
-        response = supabase.table('documents').select('*').eq('user_id', user_id).order('uploaded_at', desc=True).execute()
-        return response.data if response.data else []
-    except Exception as e:
-        print(f"Error getting documents: {e}")
-        return []
+    """Get all documents for a user - optimized with async execution"""
+    def _get_documents():
+        try:
+            response = supabase.table('documents').select('*').eq('user_id', user_id).order('uploaded_at', desc=True).execute()
+            return response.data if response.data else []
+        except Exception as e:
+            print(f"Error getting documents: {e}")
+            return []
+    
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, _get_documents)
 
 async def delete_document(doc_id: str):
     """Delete a document"""
