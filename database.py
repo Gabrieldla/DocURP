@@ -20,9 +20,8 @@ executor = ThreadPoolExecutor(max_workers=10)
 
 async def init_db():
     """Initialize database - Supabase Auth handles user management"""
-    print("✅ Supabase Auth configurado. Los usuarios se gestionan automáticamente.")
-    print("📧 Asegúrate de configurar los templates de email en el dashboard de Supabase.")
-    print("🔧 Ve a: Authentication > Email Templates")
+    print("Supabase Auth configurado. Los usuarios se gestionan automáticamente.")
+   
 
 async def signup_user(email: str, password: str, name: str, student_code: str):
     """Sign up user with Supabase Auth - trigger creates profile automatically"""
