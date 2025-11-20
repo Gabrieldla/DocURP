@@ -19,6 +19,9 @@ SECRET_KEY = os.getenv("SECRET_KEY", "tu-clave-secreta-muy-segura-cambiala")
 # Allowed file extensions
 ALLOWED_EXTENSIONS = {'.pdf', '.docx', '.doc', '.xlsx', '.xls'}
 
+# Maximum file size (50MB)
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB in bytes
+
 # Supabase Storage bucket name
 STORAGE_BUCKET = "documents"
 
@@ -1150,6 +1153,17 @@ async def get(request):
         response.delete_cookie('sb_refresh_token')
         return response
     
+    # Get error message from query params
+    error = request.query_params.get('error', '')
+    error_messages = {
+        'no_file': ('⚠️ Error', 'No se seleccionó ningún archivo'),
+        'invalid_file': ('⚠️ Error', 'Tipo de archivo no permitido. Solo PDF, Word y Excel'),
+        'file_too_large': ('⚠️ Error', 'El archivo es demasiado grande. Máximo 50MB'),
+        'empty_file': ('⚠️ Error', 'El archivo está vacío o corrupto'),
+        'timeout': ('⏱️ Error', 'La subida tardó demasiado. Intenta con un archivo más pequeño'),
+        'upload_failed': ('❌ Error', 'Error al subir el archivo. Intenta de nuevo')
+    }
+    
     return Div(
         # Background
         Div(cls='absolute inset-0 bg-gradient-to-br from-brand-dark via-gray-900 to-brand-dark'),
@@ -1174,6 +1188,25 @@ async def get(request):
                 cls='bg-white/5 backdrop-blur-xl shadow-lg rounded-2xl p-6 mb-8 border border-white/10'
             ),
             
+            # Error message (if any)
+            *([Div(
+                Div(
+                    I(cls='fas fa-exclamation-circle text-red-400 text-2xl mr-3'),
+                    Div(
+                        Strong(error_messages[error][0], cls='text-white font-semibold block'),
+                        P(error_messages[error][1], cls='text-gray-300 text-sm'),
+                        cls='flex-1'
+                    ),
+                    Button(
+                        I(cls='fas fa-times'),
+                        onclick="this.parentElement.parentElement.remove()",
+                        cls='text-gray-400 hover:text-white transition bg-transparent border-0 p-2'
+                    ),
+                    cls='flex items-center'
+                ),
+                cls='bg-red-500/10 backdrop-blur-xl border border-red-500/30 rounded-2xl p-4 mb-8'
+            )] if error in error_messages else []),
+            
             # Upload Section
             Div(
                 Div(
@@ -1188,7 +1221,7 @@ async def get(request):
                             Div(
                                 I(cls='fas fa-file-upload text-4xl text-brand mb-3', id='upload-icon'),
                                 P('Click para seleccionar o arrastra tu archivo aquí', cls='text-sm text-gray-300 mb-1', id='upload-text'),
-                                P('PDF, Word, Excel (máx. 10MB)', cls='text-xs text-gray-500', id='upload-hint'),
+                                P('PDF, Word, Excel (máx. 50MB)', cls='text-xs text-gray-500', id='upload-hint'),
                                 P('', cls='text-sm text-brand font-semibold mt-2', id='file-name'),
                                 cls='text-center py-8'
                             ),
@@ -1484,30 +1517,75 @@ async def post(request):
     if file_ext not in ALLOWED_EXTENSIONS:
         return RedirectResponse('/dashboard?error=invalid_file', status_code=303)
     
-    # Generate unique filename
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    safe_filename = f"{current_user.id}/{timestamp}_{file.filename}"
-    
-    # Read file content
+    # Read file content first to check size
     content = await file.read()
     
+    # Validate file size (50MB max)
+    if len(content) > MAX_FILE_SIZE:
+        print(f"❌ File too large: {len(content)} bytes (max {MAX_FILE_SIZE})")
+        return RedirectResponse('/dashboard?error=file_too_large', status_code=303)
+    
+    if len(content) == 0:
+        print(f"❌ File is empty")
+        return RedirectResponse('/dashboard?error=empty_file', status_code=303)
+    
+    # Sanitize filename: remove special characters and normalize
+    import re
+    import unicodedata
+    
+    # Normalize unicode characters (ñ -> n, á -> a, etc.)
+    normalized = unicodedata.normalize('NFKD', file.filename)
+    ascii_name = normalized.encode('ASCII', 'ignore').decode('ASCII')
+    
+    # Keep only alphanumeric, dots, hyphens, and underscores
+    clean_name = re.sub(r'[^\w.-]', '_', ascii_name)
+    
+    # Replace multiple underscores with single one
+    clean_name = re.sub(r'_{2,}', '_', clean_name)
+    
+    # Remove leading/trailing underscores
+    clean_name = clean_name.strip('_')
+    
+    # Generate unique filename
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    safe_filename = f"{current_user.id}/{timestamp}_{clean_name}"
+    
     try:
+        print(f"📤 Uploading file: {file.filename} ({len(content)} bytes)")
+        
         # Create a Supabase client with the user's access token for RLS
         user_supabase = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
         user_supabase.auth.set_session(access_token, request.cookies.get('sb_refresh_token'))
         
-        # Upload to Supabase Storage
-        upload_response = user_supabase.storage.from_(STORAGE_BUCKET).upload(
-            path=safe_filename,
-            file=content,
-            file_options={"content-type": file.content_type or 'application/octet-stream'}
-        )
-        print(f"✅ File uploaded to storage: {safe_filename}")
-        print(f"Upload response: {upload_response}")
+        # Upload to Supabase Storage with proper error handling
+        try:
+            upload_response = user_supabase.storage.from_(STORAGE_BUCKET).upload(
+                path=safe_filename,
+                file=content,
+                file_options={
+                    "content-type": file.content_type or 'application/octet-stream',
+                    "upsert": "false"
+                }
+            )
+            print(f"✅ File uploaded to storage: {safe_filename}")
+            print(f"Upload response: {upload_response}")
+        except Exception as storage_error:
+            print(f"❌ Supabase Storage error: {storage_error}")
+            # If file already exists, try with a different name
+            if "already exists" in str(storage_error).lower():
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+                safe_filename = f"{current_user.id}/{timestamp}_{file.filename}"
+                upload_response = user_supabase.storage.from_(STORAGE_BUCKET).upload(
+                    path=safe_filename,
+                    file=content,
+                    file_options={"content-type": file.content_type or 'application/octet-stream'}
+                )
+            else:
+                raise
         
         # Get public URL
         file_url = supabase_client.storage.from_(STORAGE_BUCKET).get_public_url(safe_filename)
-        print(f"Public URL: {file_url}")
+        print(f"📎 Public URL: {file_url}")
         
         # Save to database
         await save_document(
@@ -1523,10 +1601,18 @@ async def post(request):
         
         return RedirectResponse('/dashboard', status_code=303)
     except Exception as e:
+        error_msg = str(e).lower()
         print(f"❌ Error uploading file: {e}")
         import traceback
         traceback.print_exc()
-        return RedirectResponse('/dashboard?error=upload_failed', status_code=303)
+        
+        # Return specific error
+        if "timeout" in error_msg or "timed out" in error_msg:
+            return RedirectResponse('/dashboard?error=timeout', status_code=303)
+        elif "size" in error_msg or "large" in error_msg:
+            return RedirectResponse('/dashboard?error=file_too_large', status_code=303)
+        else:
+            return RedirectResponse('/dashboard?error=upload_failed', status_code=303)
 
 @rt('/delete/{doc_id}')
 async def post(request, doc_id: str):
